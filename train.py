@@ -1,3 +1,4 @@
+import os
 import pandas as pd
 import joblib
 
@@ -7,54 +8,99 @@ from sklearn.metrics import accuracy_score, classification_report
 
 from feature_extraction import extract_features
 
-print("Loading Dataset...")
 
-# Dataset Load
-df = pd.read_csv("dataset/phishing.csv")
+print("======================================")
+print(" AI PHISHING DETECTION - MODEL TRAINING")
+print("======================================")
 
-print(df.head())
+print("\nLoading Dataset...")
 
-# URL aur Label Columns
-urls = df["url"]
-labels = df["label"]
+dataset_path = "dataset/phishing.csv"
 
-print("Extracting Features...")
+df = pd.read_csv(dataset_path)
+
+# Basic validation
+if "url" not in df.columns or "label" not in df.columns:
+    raise ValueError(
+        "Dataset must contain 'url' and 'label' columns."
+    )
+
+# Remove empty rows
+df = df.dropna(subset=["url", "label"])
+
+# Convert values
+df["url"] = df["url"].astype(str)
+df["label"] = df["label"].astype(int)
+
+print("\nDataset Information:")
+print("Total URLs :", len(df))
+print("Safe URLs  :", sum(df["label"] == 0))
+print("Phishing URLs :", sum(df["label"] == 1))
+
+print("\nExtracting Features...")
 
 X = []
 
-for url in urls:
-    X.append(extract_features(str(url)))
+for url in df["url"]:
+    X.append(extract_features(url))
 
-y = labels
+y = df["label"]
 
-print("Splitting Dataset...")
+print("Features extracted:", len(X[0]))
+
+print("\nSplitting Dataset...")
 
 X_train, X_test, y_train, y_test = train_test_split(
     X,
     y,
-    test_size=0.2,
-    random_state=42
+    test_size=0.20,
+    random_state=42,
+    stratify=y
 )
 
-print("Training Model...")
+print("Training samples :", len(X_train))
+print("Testing samples  :", len(X_test))
+
+print("\nTraining Random Forest Model...")
 
 model = RandomForestClassifier(
-    n_estimators=200,
-    random_state=42
+    n_estimators=500,
+    max_depth=12,
+    min_samples_split=2,
+    min_samples_leaf=1,
+    class_weight="balanced",
+    random_state=42,
+    n_jobs=-1
 )
 
 model.fit(X_train, y_train)
 
-print("Testing Model...")
+print("\nTesting Model...")
 
 prediction = model.predict(X_test)
 
 accuracy = accuracy_score(y_test, prediction)
 
-print("Accuracy :", accuracy)
+print("\n======================================")
+print("MODEL RESULT")
+print("======================================")
 
-print(classification_report(y_test, prediction))
+print("Accuracy :", round(accuracy * 100, 2), "%")
 
+print("\nClassification Report:")
+print(
+    classification_report(
+        y_test,
+        prediction,
+        zero_division=0
+    )
+)
+
+# Create model directory
+os.makedirs("models", exist_ok=True)
+
+# Save model
 joblib.dump(model, "models/model.pkl")
 
-print("Model Saved Successfully!")
+print("\nModel Saved Successfully!")
+print("Location: models/model.pkl")
