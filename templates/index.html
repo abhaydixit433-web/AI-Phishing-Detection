@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Phishing Detection System</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>🛡 AI Based Phishing Detection System</h1>
+
+    <p class="subtitle">
+        Enter any website URL to check whether it is Safe or Phishing.
+    </p>
+
+    <form action="/predict" method="POST">
+
+        <input
+            type="text"
+            name="url"
+            placeholder="https://example.com"
+            value="{{ url if url else '' }}"
+            required>
+
+        <button type="submit">
+            Check Website
+        </button>
+
+    </form>
+
+    {% if result %}
+
+    <div class="result">
+
+        <h2>{{ result }}</h2>
+
+        <div class="box safe-box">
+
+            <h3>Safe Probability</h3>
+
+            <p>{{ safe }}%</p>
+
+        </div>
+
+        <div class="box phishing-box">
+
+            <h3>Phishing Probability</h3>
+
+            <p>{{ phishing }}%</p>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+</body>
+
+</html>
